@@ -37,17 +37,21 @@ def get_url_status(original_url):
 
 def main():
 
-    search_pattern = os.path.join(config['DEFAULT']['src_doc'], '**', '*.html')
-    print(search_pattern)
-    for file_path in glob.iglob(search_pattern, recursive=True):
-        file_path = file_path[len(config['DEFAULT']['src_doc']):]
-        url = config['DEFAULT']['documentation_base_url'] + file_path
-        if 'single-page.html' in url: continue
-        print(f'''Checking {url}''')
-        r = get_url_status(url)
+    with open("missing-redirects.txt", "w") as f:
 
-        if r.status_code != 200:
-            print(f'''{r.status_code}\t{r.original_url}\t{r.final_url}''')
+        search_pattern = os.path.join(config['DEFAULT']['src_doc'], '**', '*.html')
+        for file_path in glob.iglob(search_pattern, recursive=True):
+            file_path = file_path[len(config['DEFAULT']['src_doc']):]
+            url = config['DEFAULT']['documentation_base_url'] + file_path
+            if 'single-page.html' in url: continue
+            print(f'''Checking {url}''')
+            r = get_url_status(url)
+
+            if r.status_code != 200:
+                f.write(r.original_url + '\n')
+                f.flush()
+                os.fsync(f.fileno())
+                print(f'''\t{r.status_code}''')
 
 
 if __name__ == "__main__":
