@@ -1,0 +1,54 @@
+from requests_html import HTMLSession
+from dataclasses import dataclass
+import configparser, os, glob
+
+@dataclass
+class UrlStatus:
+    status_code: str
+    original_url: str
+    final_url: str
+
+global config
+global session
+
+session = HTMLSession()
+config = configparser.ConfigParser()
+config.read("settings.ini")
+
+def get_url_status(original_url):
+    try:
+        url_suffix = '?version=' + config['DEFAULT']['target_doc_version']
+        full_url = original_url + url_suffix 
+        response = session.get(full_url)
+        response.html.render()
+
+        # Strip the final url from the version suffix for UrlStatus
+        final_url = response.url
+        if final_url.endswith(url_suffix):
+            final_url = final_url[:-len(url_suffix)]
+
+        status_code = response.status_code
+
+        return UrlStatus(status_code=status_code, original_url=original_url, final_url=final_url)
+
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+
+
+def main():
+
+    search_pattern = os.path.join(config['DEFAULT']['src_doc'], '**', '*.html')
+    print(search_pattern)
+    for file_path in glob.iglob(search_pattern, recursive=True):
+        file_path = file_path[len(config['DEFAULT']['src_doc']):]
+        url = config['DEFAULT']['documentation_base_url'] + file_path
+        if 'single-page.html' in url: continue
+        print(f'''Checking {url}''')
+        r = get_url_status(url)
+
+        if r.status_code != 200:
+            print(f'''{r.status_code}\t{r.original_url}\t{r.final_url}''')
+
+
+if __name__ == "__main__":
+    main()
