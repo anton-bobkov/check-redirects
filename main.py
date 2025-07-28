@@ -1,6 +1,8 @@
 from requests_html import HTMLSession
 from dataclasses import dataclass
 import configparser, os, glob
+import requests
+from pyppeteer import errors
 
 @dataclass
 class UrlStatus:
@@ -31,9 +33,18 @@ def get_url_status(original_url):
 
         return UrlStatus(status_code=status_code, original_url=original_url, final_url=final_url)
 
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-
+    #except Exception as e:
+    #    print(f"Произошла ошибка: {e}")
+    #    return None
+    except requests.exceptions.Timeout as e:
+        print(f"Timeout Error: {e}")
+        return None
+    except requests.exceptions.ConnectionError as e:
+        print(f"Connection Error: {e}")
+        return None
+    except errors.PageError as e:
+        print(f"PageError: {e}")
+        return None
 
 def main():
 
@@ -46,8 +57,7 @@ def main():
             if 'single-page.html' in url: continue
             print(f'''Checking {url}''')
             r = get_url_status(url)
-
-            if r.status_code != 200:
+            if r is not None and r.status_code != 200:
                 f.write(r.original_url + '\n')
                 f.flush()
                 os.fsync(f.fileno())
