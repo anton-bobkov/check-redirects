@@ -1,4 +1,4 @@
-from requests_html import HTMLSession
+from requests_html import HTMLSession, MaxRetries
 from dataclasses import dataclass
 import configparser, os, glob
 import requests
@@ -21,7 +21,7 @@ def get_url_status(original_url):
     try:
         url_suffix = '?version=' + config['DEFAULT']['target_doc_version']
         full_url = original_url + url_suffix 
-        response = session.get(full_url, timeout=10)
+        response = session.get(full_url, timeout=120)
         response.html.render()
 
         # Strip the final url from the version suffix for UrlStatus
@@ -44,6 +44,9 @@ def get_url_status(original_url):
         return None
     except errors.PageError as e:
         print(f"PageError: {e}")
+        return None
+    except MaxRetries as e:
+        print(f"MaxRetries: {e}")
         return None
 
 def main():
