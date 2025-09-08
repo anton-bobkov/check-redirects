@@ -19,7 +19,7 @@ config.read("settings.ini")
 
 def get_url_status(original_url):
     try:
-        url_suffix = '?version=' + config['DEFAULT']['target_doc_version']
+        url_suffix = '?'+config['DEFAULT']['parameter']+'=' + config['DEFAULT']['target_doc_version']
         full_url = original_url + url_suffix 
         response = session.get(full_url, timeout=120)
         response.html.render()
